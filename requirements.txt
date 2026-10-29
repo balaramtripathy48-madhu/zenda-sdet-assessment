@@ -1,0 +1,6 @@
+pytest
+playwright
+pytest-html
+pytest-xdist
+python-dotenv
+Faker
