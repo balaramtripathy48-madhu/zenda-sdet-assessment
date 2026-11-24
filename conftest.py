@@ -4,6 +4,8 @@ from playwright.sync_api import Playwright
 
 from utils.config_reader import get_base_url, get_browser, get_headless
 from utils.logger import get_logger
+from tests.common_steps import *
+
 
 
 logger = get_logger(__name__)
