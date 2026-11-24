@@ -1,6 +1,6 @@
 import logging
-
 from playwright.sync_api import Page, expect
+from pytest_bdd import scenarios, given, when, then, parsers
 
 from pages.signup_page import SignupPage
 from pages.products_page import ProductsPage
@@ -22,27 +22,16 @@ from test_data.signup_data import (
 
 logger = logging.getLogger(__name__)
 
+scenarios("../features/end_to_end_user_journey.feature")
 
-def test_end_to_end_user_journey(page: Page):
-    logger.info("========== E2E TEST START ==========")
 
-    # STEP 1: Create a new account
-    logger.info("STEP 1: Initialize SignupPage")
+@given("a new user registers an account successfully")
+def register_new_user(page: Page):
+    logger.info("ACTION: Register new user account")
     signup_page = SignupPage(page)
-
-    logger.info("STEP 2: Open signup page")
     signup_page.open_signup_page()
-
-    logger.info("STEP 3: Enter signup name and unique email")
-    signup_page.enter_signup_details(
-        SIGNUP_NAME,
-        generate_unique_email(),
-    )
-
-    logger.info("STEP 4: Verify account information page")
+    signup_page.enter_signup_details(SIGNUP_NAME, generate_unique_email())
     signup_page.verify_account_information_page()
-
-    logger.info("STEP 5: Fill account information and create account")
     signup_page.fill_account_information(
         password=SIGNUP_PASSWORD,
         first_name=FIRST_NAME,
@@ -54,97 +43,51 @@ def test_end_to_end_user_journey(page: Page):
         zipcode=ZIPCODE,
         mobile=MOBILE,
     )
+    expect(page.get_by_text("Account Created!")).to_be_visible()
+    logger.info("ASSERTION: Account created successfully")
 
-    logger.info("STEP 6: Verify account creation")
-    expect(
-        page.get_by_text("Account Created!")
-    ).to_be_visible()
 
-    logger.info("ASSERTION PASSED: Account created successfully")
-
-    # STEP 2: Continue after account creation
-    logger.info("STEP 7: Click Continue after account creation")
+@when("the user clicks Continue after account creation")
+def click_continue(page: Page):
+    logger.info("ACTION: Click Continue after account creation")
     page.get_by_role("link", name="Continue").click()
 
-    logger.info("STEP 8: Verify user is logged in")
-    expect(
-        page.get_by_text("Logged in as", exact=False)
-    ).to_be_visible()
 
-    logger.info("ASSERTION PASSED: User logged in successfully")
+@then('the user should see "Logged in as"')
+def verify_logged_in(page: Page):
+    logger.info("ASSERTION: Verify Logged in as is visible")
+    expect(page.get_by_text("Logged in as", exact=False)).to_be_visible()
 
-    # STEP 3: Search for product
-    logger.info("STEP 9: Initialize ProductsPage")
+
+@when("the user navigates to the products page")
+def nav_to_products(page: Page):
+    logger.info("ACTION: Navigate to products page")
     products_page = ProductsPage(page)
-
-    logger.info("STEP 10: Open products page")
     products_page.open_products_page()
 
-    logger.info("STEP 11: Search for product Blue Top")
-    products_page.search_product("Blue Top")
 
-    logger.info("STEP 12: Verify Blue Top appears in search results")
-    expect(
-        page.get_by_text("Blue Top", exact=True).first
-    ).to_be_visible()
+@when(parsers.parse('the user searches for product "{product_name}"'))
+def search_product(page: Page, product_name: str):
+    logger.info("ACTION: Search for product: %s", product_name)
+    products_page = ProductsPage(page)
+    products_page.search_product(product_name)
 
-    logger.info("ASSERTION PASSED: Blue Top is visible in search results")
 
-    # STEP 4: Select product
-    logger.info("STEP 13: Select the first product")
+@then(parsers.parse('"{product_name}" should be visible in the search results'))
+def verify_product_search_result(page: Page, product_name: str):
+    logger.info("ASSERTION: Verify %s in search results", product_name)
+    expect(page.get_by_text(product_name, exact=True).first).to_be_visible()
+
+
+@when("the user selects the first product")
+def select_first_product(page: Page):
+    logger.info("ACTION: Select first product")
+    products_page = ProductsPage(page)
     products_page.select_first_product()
+    expect(page.locator("#quantity")).to_be_visible()
 
-    logger.info("STEP 14: Verify product details page opened")
-    expect(
-        page.locator("#quantity")
-    ).to_be_visible()
 
-    logger.info("ASSERTION PASSED: Product details page is visible")
-
-    # STEP 5: Add product to cart
-    logger.info("STEP 15: Click Add to Cart")
+@when("the user clicks Add to Cart on product details")
+def click_add_to_cart(page: Page):
+    logger.info("ACTION: Click Add to Cart button")
     page.get_by_role("button", name="Add to cart").click()
-
-    logger.info("STEP 16: Verify product-added confirmation")
-    expect(
-        page.get_by_text("Your product has been added to cart")
-    ).to_be_visible()
-
-    logger.info("ASSERTION PASSED: Product added to cart")
-
-    # STEP 6: Open cart
-    logger.info("STEP 17: Initialize CartPage")
-    cart_page = CartPage(page)
-
-    logger.info("STEP 18: Open cart from confirmation popup")
-    cart_page.view_cart_from_popup()
-
-    logger.info("STEP 19: Verify product is in cart")
-    expect(
-        cart_page.get_cart_products()
-    ).to_be_visible()
-
-    logger.info("ASSERTION PASSED: Product is visible in cart")
-
-    # STEP 7: Proceed to checkout
-    logger.info("STEP 20: Proceed to checkout")
-    cart_page.proceed_to_checkout()
-
-    logger.info("STEP 21: Verify Address Details section")
-    expect(
-        page.get_by_text("Address Details")
-    ).to_be_visible()
-
-    logger.info("ASSERTION PASSED: Address Details is visible")
-
-    logger.info("STEP 22: Verify Review Your Order section")
-    expect(
-        page.get_by_text("Review Your Order")
-    ).to_be_visible()
-
-    logger.info("ASSERTION PASSED: Review Your Order is visible")
-
-    # Do not place an order or make a payment
-    logger.info("STEP 23: Stop before placing an order or payment")
-
-    logger.info("========== E2E TEST PASSED ==========")

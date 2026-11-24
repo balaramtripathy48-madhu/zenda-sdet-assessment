@@ -1,9 +1,7 @@
 import logging
-
 from playwright.sync_api import Page, expect
-
+from pytest_bdd import scenarios, given, when, then
 from pages.signup_page import SignupPage
-
 from test_data.signup_data import (
     SIGNUP_NAME,
     SIGNUP_PASSWORD,
@@ -20,84 +18,59 @@ from test_data.signup_data import (
 
 logger = logging.getLogger(__name__)
 
+scenarios("../features/signup.feature")
 
-def test_signup_page_loads(page: Page):
-    logger.info("TEST START: Verify signup page loads")
 
-    # Step 1: Navigate to homepage
-    logger.info("STEP 1: Navigate to the Automation Exercise homepage")
-    page.goto("https://automationexercise.com/")
-
-    # Step 2: Open Signup / Login page
-    logger.info("STEP 2: Click Signup / Login link")
+@when("the user clicks on the Signup / Login link")
+def click_signup_login_link(page: Page):
+    logger.info("ACTION: Click Signup / Login link")
     page.get_by_role("link", name="Signup / Login").click()
 
-    # Step 3: Verify signup page
-    logger.info("STEP 3: Verify New User Signup heading is visible")
+
+@then('the "New User Signup!" heading should be visible')
+def verify_new_user_signup_heading(page: Page):
+    logger.info("ASSERTION: Verify New User Signup heading")
     expect(page.get_by_text("New User Signup!")).to_be_visible()
 
-    logger.info("ASSERTION PASSED: New User Signup heading is visible")
-    logger.info("TEST PASSED: Verify signup page loads")
 
-
-def test_signup_form(page: Page):
-    logger.info("TEST START: Verify signup form submission")
-
-    # Step 1: Navigate to homepage
-    logger.info("STEP 1: Navigate to the Automation Exercise homepage")
-    page.goto("https://automationexercise.com/")
-
-    # Step 2: Open Signup / Login page
-    logger.info("STEP 2: Click Signup / Login link")
-    page.get_by_role("link", name="Signup / Login").click()
-
-    # Step 3: Enter name
-    logger.info("STEP 3: Enter signup name")
+@when("the user enters a valid name and unique email")
+def enter_valid_name_and_email(page: Page):
+    logger.info("ACTION: Enter name and unique email")
     page.get_by_placeholder("Name").fill(SIGNUP_NAME)
+    page.locator('form[action="/signup"] input[type="email"]').fill(generate_unique_email())
 
-    # Step 4: Enter unique email
-    logger.info("STEP 4: Enter signup email")
-    page.locator(
-        'form[action="/signup"] input[type="email"]'
-    ).fill(generate_unique_email())
 
-    # Step 5: Click Signup
-    logger.info("STEP 5: Click Signup button")
+@when("the user submits the signup form")
+def submit_signup_form(page: Page):
+    logger.info("ACTION: Click Signup button")
     page.get_by_role("button", name="Signup").click()
 
-    # Step 6: Verify next page
-    logger.info("STEP 6: Verify Enter Account Information page is visible")
-    expect(
-        page.get_by_text("Enter Account Information")
-    ).to_be_visible()
 
-    logger.info("ASSERTION PASSED: Enter Account Information page is visible")
-    logger.info("TEST PASSED: Verify signup form submission")
+@then('the "Enter Account Information" page should be visible')
+def verify_enter_account_info_page(page: Page):
+    logger.info("ASSERTION: Verify Enter Account Information page")
+    expect(page.get_by_text("Enter Account Information")).to_be_visible()
 
 
-def test_create_new_account(page: Page):
-    logger.info("TEST START: Create a new user account")
-
-    # Create Signup Page Object
+@given("the user opens the signup page")
+def open_signup_page(page: Page):
+    logger.info("ACTION: Open signup page")
     signup_page = SignupPage(page)
-
-    # Step 1: Open signup page
-    logger.info("STEP 1: Open signup page")
     signup_page.open_signup_page()
 
-    # Step 2: Enter signup name and unique email
-    logger.info("STEP 2: Enter signup details")
-    signup_page.enter_signup_details(
-        SIGNUP_NAME,
-        generate_unique_email(),
-    )
 
-    # Step 3: Verify account information page
-    logger.info("STEP 3: Verify account information page")
+@when("the user enters signup details with a unique email")
+def enter_signup_details(page: Page):
+    logger.info("ACTION: Enter signup name and unique email")
+    signup_page = SignupPage(page)
+    signup_page.enter_signup_details(SIGNUP_NAME, generate_unique_email())
     signup_page.verify_account_information_page()
 
-    # Step 4: Fill account information and create account
-    logger.info("STEP 4: Fill account information and create account")
+
+@when("the user fills in account information and submits")
+def fill_account_info_and_submit(page: Page):
+    logger.info("ACTION: Fill account info and create account")
+    signup_page = SignupPage(page)
     signup_page.fill_account_information(
         password=SIGNUP_PASSWORD,
         first_name=FIRST_NAME,
@@ -110,11 +83,8 @@ def test_create_new_account(page: Page):
         mobile=MOBILE,
     )
 
-    # Step 5: Verify account creation
-    logger.info("STEP 5: Verify account creation")
-    expect(
-        page.get_by_text("Account Created!")
-    ).to_be_visible()
 
-    logger.info("ASSERTION PASSED: Account created successfully")
-    logger.info("TEST PASSED: Create a new user account")
+@then('the "Account Created!" confirmation should be visible')
+def verify_account_created(page: Page):
+    logger.info("ASSERTION: Verify Account Created!")
+    expect(page.get_by_text("Account Created!")).to_be_visible()

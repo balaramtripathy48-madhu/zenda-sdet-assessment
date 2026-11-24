@@ -13,6 +13,7 @@ The project follows the Page Object Model (POM) design pattern to improve test m
 - Python 3.11
 - Playwright
 - Pytest
+- Pytest-bdd for BDD (Behavior Driven Development) feature scenarios
 - Pytest-xdist for parallel test execution
 - Pytest-html for HTML test reporting
 - python-dotenv for environment configuration
@@ -22,8 +23,9 @@ The project follows the Page Object Model (POM) design pattern to improve test m
 
 ```text
 zenda_sdet_assessment/
+├── features/                 # Gherkin BDD .feature scenario files
 ├── pages/                  # Page Object Model classes
-├── tests/                  # Automated test cases
+├── tests/                  # Automated test cases & BDD step definitions
 ├── test_data/              # Test data and test data generators
 ├── utils/                  # Configuration and logging utilities
 ├── config/                  # Configuration files

@@ -1,14 +1,19 @@
+import logging
 from playwright.sync_api import Page, expect
-from utils.logger import get_logger
+from pytest_bdd import scenarios, given, then
 
-logger = get_logger(__name__)
+logger = logging.getLogger(__name__)
+
+scenarios("../features/home.feature")
 
 
-def test_homepage_loads(page: Page):
-    logger.info("Starting homepage test")
-
+@given("the user navigates to the homepage")
+def navigate_to_homepage(page: Page):
+    logger.info("ACTION: Navigate to homepage")
     page.goto(page.base_url)
 
-    expect(page).to_have_title("Automation Exercise")
 
-    logger.info("Homepage loaded successfully")
+@then('the page title should be "Automation Exercise"')
+def verify_page_title(page: Page):
+    logger.info("ASSERTION: Verify page title")
+    expect(page).to_have_title("Automation Exercise")
